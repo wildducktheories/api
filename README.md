@@ -5,7 +5,7 @@ api - a Java library for managing thread-local API singletons
 This Java library provides a generic abstraction for managing thread-local API singletons.
 
 APIs provide some service to an application or to the implementations of other APIs.
-A question arises about how to locate a reference to the API.
+A question arises about how to locate a reference to an API.
 
 Static singletons provide one way to do this, but it is often difficult to safely
 and satisfactorily vary the implementation of such singletons as requirements change particularly
@@ -22,11 +22,15 @@ to vary, on a per thread basis, within a limited scope according to the requirem
 scope. This style of service location is particularly useful for APIs that encapsulate
 state that is local to the current thread or execution context and that can't easily be communicated
 with method parameters from the context that establishes the state to the context that needs to
-make use of it.
+make use of it. The classic example of this kind of API is a transaction API where a top-level
+context establishes a transaction and a lower-level context needs to access the transaction for 
+the purposes of attaching to the transaction or calling its commit or rollback methods. 
 
 The APIManager type represents a manager for API instances that can do the following things:
 
-* <code>get()</code> - provide a reference to the current implementation of an API type for the current thread.
+* <code>newAPI()</code> - create a new default instance of an API without associating that instance with the current thread
+* <code>get()</code> - provide a reference to the current implementation of an API type for the current thread 
+or create a new such instance (using newAPI()) if required.
 * <code>with()</code> - vary the current implementation of an API type, for the duration of
 the execution of a Runnable or Callable block of code
 * <code>reset()</code> - to cleanup "naked" calls to the <code>get()</code> method that might occur outside
@@ -37,19 +41,24 @@ a controlled manner by the <code>with()</code> method but only for the duration 
 associated Callable or Runnable. By the time the <code>with()</code> method returns, the original
 implementation of the API type will be restored as the thread's current implementation.
 
-Concrete APIManager implementations implement the protected <code>newAPI()</code> method which can construct
+In cases where the application cannot guarantee that <code>get()</code> is always called within 
+the scope of an enclosing <code>with()</code> call, the application MUST call the <code>reset()</code>
+method before losing its last reference to the current thread. This call is required to clear a 
+ThreadLocal which will otherwise pin the API's class loader.
+
+Concrete APIManager implementations implement the <code>newAPI()</code> method which can construct
 a usable default instance of the API type. If there is ever a need to vary the default
 implementation, then the application programmer can arrange to execute application code that
 needs the alternative implementation within a block of code that executes within the scope of
 a <code>APIManager.with()</code> call.
 
 Ownership of the concrete APIManager instance is typically encapsulated by the instance of a
-final class that exposes static methods that delegate to the APIManager instance thereby allowing
+final class that exposes static methods that delegate to the static APIManager instance thereby allowing
 access to the current instance of the API type for the current thread without needing to provide
 any other reference.
 
 The following example shows the boiler plate to create a final class that delegates the
-implementation of 4 static methods to an instance of a concrete APIManager implementation.
+implementation of 5 static methods to an instance of a concrete APIManager implementation.
 In this example, the API type is a type called Foo and the type FooAPI provides access to
 instances of this type, as follows:
 
@@ -62,6 +71,11 @@ instances of this type, as follows:
 	  };
 
 	  private FooAPI() {}
+	  
+	  public static Foo newAPI() 
+	  {
+	  	return manager.newAPI();
+	  }
 
 	  public static Foo get()
 	  {
