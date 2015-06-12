@@ -24,7 +24,7 @@ public abstract class AbstractAPIManagerImpl<A extends API> implements APIManage
 	 * Constructs a default instance of the API type.
 	 * @return A new instance of the API type.
 	 */
-	protected abstract A newAPI();
+	public abstract A newAPI();
 
 	@Override
 	public A get() {

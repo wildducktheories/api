@@ -16,10 +16,11 @@ import java.util.concurrent.Callable;
  *     public API newAPI() {
  *       return ...; // defaultAPI implementation
  *     }
- *   }
+ *   };
  *
  *  private SpecificAPI() {}
  *  public static API get() { return manager.get(); }
+ *  public static API newAPI() { return manager.newAPI(); }
  *  public static void reset() { manager.reset(); }
  *  public static &lt;P&gt; P with(API api, Callable&lt;P&gt; c) { return manager.with(api, c); }
  *  public static void with(API api, Runnable r) { manager.with(api, r); }
@@ -34,6 +35,11 @@ import java.util.concurrent.Callable;
  */
 public interface APIManager<A extends API>
 {
+	/**
+	 * @return A new instance of the API type A.
+	 */
+	A newAPI();
+	
 	/**
 	 * Get the current Thread's current instance of an API.
 	 * @return An instance of A.
