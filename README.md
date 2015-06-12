@@ -22,9 +22,17 @@ to vary, on a per thread basis, within a limited scope according to the requirem
 scope. This style of service location is particularly useful for APIs that encapsulate
 state that is local to the current thread or execution context and that can't easily be communicated
 with method parameters from the context that establishes the state to the context that needs to
-make use of it. The classic example of this kind of API is a transaction API where a top-level
+make use of it. 
+
+The classic example of this kind of API is a transaction API where a top-level
 context establishes a transaction and a lower-level context needs to access the transaction for 
-the purposes of attaching to the transaction or calling its commit or rollback methods. 
+the purposes of attaching to the transaction or calling its commit or rollback methods. While in principle
+it might be possible to propagate a reference to the transaction from the top-level context
+to the lower-level context with method parameters at each level, in practice it is usually
+easier allow the two contexts to communicate the shared transaction state via an encapsulated
+ThreadLocal object.
+
+This API provides an implementation of a pattern for managing thread locals used for this purpose.
 
 The APIManager type represents a manager for API instances that can do the following things:
 
