@@ -31,6 +31,7 @@ public abstract class AbstractAPIManagerImpl<A extends API> implements APIManage
 		A api = perThread.get();
 		if (api == null) {
 			api = create();
+			perThread.set(api);
 		}
 		return api;
 	}
